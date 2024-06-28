@@ -49,8 +49,9 @@ class HWPExtractor(object):
     def _get_text(self):
         sections = self.get_body_sections(self._dirs)
         text = ""
-        for section in sections:
-            text += self.get_text_from_section(section)
+        for i, section in enumerate(sections):
+            section_text = self.get_text_from_section(section)
+            text += section_text
             text += "\n"
         self.text = text
         return self.text
@@ -63,23 +64,44 @@ class HWPExtractor(object):
         size = len(unpacked_data)
 
         i = 0
+        idx = 0
         text = ""
         while i < size:
             header = struct.unpack_from("<I", unpacked_data, i)[0]
             rec_type = header & 0x3ff
             level = (header >> 10) & 0x3ff
             rec_len = (header >> 20) & 0xfff
-
+            
             if rec_type in self.HWP_TEXT_TAGS:
+                
                 rec_data = unpacked_data[i + 4:i + 4 + rec_len]
                 decode_text = rec_data.decode('utf-16')
                 res = self.remove_control_characters(self.remove_chinese_characters(decode_text))
+                print(f"{idx}: {res}")
+                input()
                 text += res
                 text += "\n"
+                idx+=1
+            # elif rec_type in self.HWP_TABLE_TAGS:
+            #     rec_data = unpacked_data[i + 4:i + 4 + rec_len]
+            #     decode_text = rec_data.decode('utf-16')
+            #     cleaned_text = self.remove_control_characters(self.remove_chinese_characters(decode_text))
+            #     print('cleaned_text:', cleaned_text)
 
             i += 4 + rec_len
 
         return text
+
+
+    def is_table_text(self, rec_type):
+        # Define logic to differentiate table text from regular text if needed
+        return rec_type in self.HWP_TEXT_TAGS
+
+    def format_table(self, table):
+        formatted_text = ""
+        for row in table:
+            formatted_text += ", ".join(row.split()) + "\n"
+        return formatted_text
 
     @staticmethod
     def remove_chinese_characters(s: str):
@@ -89,22 +111,9 @@ class HWPExtractor(object):
     def remove_control_characters(s):
         return "".join(ch for ch in s if unicodedata.category(ch)[0] != "C")
 
-def get_text(filename):
-    hwp = HWPExtractor(filename)
-    return hwp.get_text()
 
-# HWP 파일에서 텍스트 추출
-hwp_file_path = '/content/정보공개서_서울토리v1.hwp'
-text = get_text(hwp_file_path)
-
-# 텍스트를 줄 단위로 분리
-lines = text.split('\n')
-
-# Pandas DataFrame으로 변환
-df = pd.DataFrame(lines, columns=['Text'])
-
-# 엑셀 파일로 저장
-excel_file_path = '/content/hwp_text.xlsx'
-df.to_excel(excel_file_path, index=False)
-
-print(f"Extracted text has been saved to {excel_file_path}")
+# Main code to run the HWPExtractor
+if __name__ == "__main__":
+    filename = "test1.hwp"  # Replace with your HWP file path
+    extractor = HWPExtractor(filename)
+    extracted_text = extractor.get_text()

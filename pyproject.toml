@@ -9,6 +9,8 @@ readme = "README.md"
 python = "^3.12"
 olefile = "^0.47"
 openpyxl = "^3.1.4"
+pywin32 = "^306"
+pyhwpx = "^0.15.1"
 
 
 [build-system]
