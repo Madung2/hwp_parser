@@ -4,6 +4,7 @@ import struct
 import re
 import unicodedata
 import pandas as pd
+# olefile은 
 
 class HWPExtractor(object):
     FILE_HEADER_SECTION = "FileHeader"
